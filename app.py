@@ -1,24 +1,63 @@
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from dotenv import load_dotenv
+from flask import Flask, logging
+from src.utils.database import db
 from flask_marshmallow import Marshmallow
+from src.config.config import DevelopmentConfig, ProductionConfig, TestingConfig
+from src.utils.response import response_with
+import src.utils.response as resp 
 import os
 
-load_dotenv()
+from src.controllers.AuthorController import author_routes
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://{}:{}@{}:{}/{}'.format(os.getenv('DB_USERNAME'), os.getenv('DB_PASSWORD'), os.getenv('DB_HOST'), os.getenv('DB_PORT'), os.getenv('DB_NAME'))
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
 
-ma = Marshmallow(app)
+if os.environ.get('WORK_ENV') == 'PROD':
+    app_config = ProductionConfig
+elif os.environ.get('WORK_ENV') == 'TEST':
+    app_config = TestingConfig
+else:
+    app_config = DevelopmentConfig
 
-@app.before_first_request
-def create_tables():
+
+app.config.from_object(app_config)
+
+db.init_app(app)
+with app.app_context():
     db.create_all()
 
-from controllers.AuthorController import *
+# START GLOBAL HTTP CONFIGURATIONS
+@app.after_request
+def add_header(response):
+    return response
 
+@app.errorhandler(400)
+def bad_request(e):
+    logging.error(e)
+    return response_with(resp.BAD_REQUEST_400)
+
+@app.errorhandler(500)
+def server_error(e):
+    logging.error(e)
+    return response_with(resp.SERVER_ERROR_500)
+
+@app.errorhandler(404)
+def not_found(e):
+    logging.error(e)
+    return response_with(resp.SERVER_ERROR_404)
+
+# ma = Marshmallow(app)
+
+app.register_blueprint(author_routes, url_prefix='/authors')
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(port=5000, host="0.0.0.0", use_reloader=False)
+
+
+
+
+# def create_app(config):
+#     app = Flask(__name__)
+#     app.config.from_object(config)
+#     db.init_app(app)
+#     with app.app_context():
+#         db.create_all()
+#     return app
