@@ -7,6 +7,7 @@ import src.utils.response as resp
 import os
 
 from src.controllers.AuthorController import author_routes
+from src.controllers.BookController import book_routes
 
 app = Flask(__name__)
 
@@ -47,6 +48,7 @@ def not_found(e):
 # ma = Marshmallow(app)
 
 app.register_blueprint(author_routes, url_prefix='/authors')
+app.register_blueprint(book_routes, url_prefix='/book')
 
 if __name__ == "__main__":
     app.run(port=5000, host="0.0.0.0", use_reloader=False)
