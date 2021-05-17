@@ -1,13 +1,15 @@
-from flask import Flask, logging
+from flask import Flask, logging, jsonify
 from src.utils.database import db
 from flask_marshmallow import Marshmallow
 from src.config.config import DevelopmentConfig, ProductionConfig, TestingConfig
 from src.utils.response import response_with
 import src.utils.response as resp 
+from flask_jwt_extended import JWTManager
 import os
 
 from src.controllers.AuthorController import author_routes
 from src.controllers.BookController import book_routes
+from src.controllers.UserController import user_routes
 
 app = Flask(__name__)
 
@@ -20,6 +22,13 @@ else:
 
 
 app.config.from_object(app_config)
+app.config['JWT_SECRET_KEY']=os.getenv('JWT_SECRET')
+
+jwt = JWTManager(app)
+
+@jwt.expired_token_loader
+def expired_token_callback():
+    return jsonify({'Description':'Token Expired'}), 401
 
 db.init_app(app)
 with app.app_context():
@@ -45,21 +54,10 @@ def not_found(e):
     logging.error(e)
     return response_with(resp.SERVER_ERROR_404)
 
-# ma = Marshmallow(app)
 
 app.register_blueprint(author_routes, url_prefix='/authors')
 app.register_blueprint(book_routes, url_prefix='/book')
+app.register_blueprint(user_routes, url_prefix='/user')
 
 if __name__ == "__main__":
     app.run(port=5000, host="0.0.0.0", use_reloader=False)
-
-
-
-
-# def create_app(config):
-#     app = Flask(__name__)
-#     app.config.from_object(config)
-#     db.init_app(app)
-#     with app.app_context():
-#         db.create_all()
-#     return app

@@ -3,10 +3,12 @@ from src.models.BookModel import Book, BookSchema
 from src.utils.database import db
 import src.utils.response as resp
 from src.utils.response import response_with
+from flask_jwt_extended import jwt_required
 
 book_routes = Blueprint('book_routes', __name__)
 
 @book_routes.route('/all', methods=['GET'])
+@jwt_required()
 def index():
     try:
         all_books = Book.list_all()
@@ -20,6 +22,7 @@ def index():
         return response_with(resp.SERVER_ERROR_500)
 
 @book_routes.route('/', methods=['POST'])
+@jwt_required()
 def create_book():
     try:
         data = request.get_json()
@@ -36,6 +39,7 @@ def create_book():
         return response_with(resp.SERVER_ERROR_500, value={"error_msg": msg})
 
 @book_routes.route('/<id>', methods=['PUT'])
+@jwt_required()
 def edit(id):
     try:
         book = Book.getById(id)
@@ -61,6 +65,7 @@ def edit(id):
         return response_with(resp.SERVER_ERROR_500, value={"error_msg": msg})
 
 @book_routes.route('/<id>', methods=['GET'])
+@jwt_required()
 def findOne(id):
     try:
         book = Book.getById(id)
@@ -76,6 +81,7 @@ def findOne(id):
         return response_with(resp.SERVER_ERROR_404, value={"error_msg": msg})
 
 @book_routes.route('/<id>', methods=['DELETE'])
+@jwt_required()
 def remove(id):
     try:
         book = Book.getById(id)
