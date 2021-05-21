@@ -3,6 +3,7 @@ from src.utils.database import db
 from flask_marshmallow import Marshmallow
 from src.config.config import DevelopmentConfig, ProductionConfig, TestingConfig
 from src.utils.response import response_with
+from src.utils.email import mail
 import src.utils.response as resp 
 from flask_jwt_extended import JWTManager
 import os
@@ -25,6 +26,7 @@ app.config.from_object(app_config)
 app.config['JWT_SECRET_KEY']=os.getenv('JWT_SECRET')
 
 jwt = JWTManager(app)
+mail.init_app(app)
 
 @jwt.expired_token_loader
 def expired_token_callback():
